@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and sensitive areas
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /staff/
+Disallow: /api/
+Disallow: /storage/
+Disallow: /.env
+Disallow: /vendor/
+Disallow: /config/
+
+# Allow important pages
+Allow: /products/
+Allow: /categories/
+Allow: /about
+Allow: /contact
+Allow: /faq
+
+# Sitemap (you can add this later)
+Sitemap: http://13.204.86.61/sitemap.xml
