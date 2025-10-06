@@ -307,14 +307,15 @@ class ProductApiController extends Controller
      */
     public function byCategory($slug)
     {
-        $category = Category::where('slug', $slug)->first();
-        
-        if (!$category) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Category not found'
-            ], 404);
-        }
+        try {
+            $category = Category::where('slug', $slug)->first();
+            
+            if (!$category) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Category with slug '{$slug}' not found"
+                ], 404);
+            }
 
         $products = Product::where('is_active', true)
             ->where('category_id', $category->category_id)
@@ -377,5 +378,12 @@ class ProductApiController extends Controller
             ],
             'message' => 'Category products retrieved successfully'
         ]);
+        
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving category products: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

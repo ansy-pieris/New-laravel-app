@@ -63,10 +63,10 @@ Route::prefix('apparel')->group(function () {
     // CATEGORY BROWSING
     // ========================================
     Route::get('categories', [CategoryApiController::class, 'index']);              // Get all categories
+    Route::get('categories/{slug}/page', [ProductApiController::class, 'byCategory']); // Category page data (must be before {id} routes)
     Route::get('categories/{id}', [CategoryApiController::class, 'show']);          // Get single category
     Route::get('categories/{id}/products', [CategoryApiController::class, 'getProducts']); // Category products
     Route::get('categories/{id}/stats', [CategoryApiController::class, 'getStats']);       // Category statistics
-    Route::get('categories/{slug}/page', [ProductApiController::class, 'byCategory']); // Category page data
     
     // ========================================
     // USER BROWSING
