@@ -95,13 +95,29 @@ class AuthController extends Controller
     }
 
     /**
-     * Get user profile
+     * Get user profile (enhanced for mobile app)
      */
     public function getProfile(Request $request)
     {
+        $user = $request->user();
+        
         return response()->json([
             'success' => true,
-            'data' => $request->user(),
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'phone' => $user->phone,
+                'address' => $user->address,
+                'city' => $user->city,
+                'postal_code' => $user->postal_code,
+                'email_verified_at' => $user->email_verified_at,
+                'created_at' => $user->created_at,
+                'updated_at' => $user->updated_at,
+                'is_admin' => $user->isAdmin(),
+                'is_staff' => $user->isStaff(),
+            ],
             'message' => 'Profile retrieved successfully'
         ]);
     }

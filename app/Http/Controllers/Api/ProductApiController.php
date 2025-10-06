@@ -11,23 +11,49 @@ use Illuminate\Support\Facades\Storage;
 class ProductApiController extends Controller
 {
     /**
-     * Get all products with pagination
+     * Get all products with pagination (enhanced for mobile app)
      */
     public function index(Request $request)
     {
-        $perPage = $request->get('per_page', 15);
-        $products = Product::with('category')
-                          ->paginate($perPage);
+        $perPage = $request->get('per_page', 12); // Match web pagination
+        $category = $request->get('category');
+        
+        $query = Product::with('category')->where('is_active', true);
+        
+        // Filter by category if provided
+        if ($category) {
+            $categoryModel = Category::where('slug', $category)->first();
+            if ($categoryModel) {
+                $query->where('category_id', $categoryModel->category_id);
+            }
+        }
+        
+        $products = $query->latest()->paginate($perPage);
+
+        // Transform products to match web data structure
+        $transformedProducts = $products->getCollection()->map(function ($product) {
+            return $this->formatProductData($product);
+        });
 
         return response()->json([
             'success' => true,
-            'data' => $products,
+            'data' => [
+                'products' => $transformedProducts,
+                'pagination' => [
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total(),
+                    'from' => $products->firstItem(),
+                    'to' => $products->lastItem(),
+                ]
+            ],
             'message' => 'Products retrieved successfully'
         ]);
     }
 
     /**
-     * Get single product details
+     * Get single product details (enhanced for mobile app)
      */
     public function show($id)
     {
@@ -42,7 +68,7 @@ class ProductApiController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $product,
+            'data' => $this->formatProductData($product, true),
             'message' => 'Product retrieved successfully'
         ]);
     }
@@ -208,6 +234,132 @@ class ProductApiController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Product deleted successfully'
+        ]);
+    }
+
+    /**
+     * Format product data to match web application structure
+     */
+    private function formatProductData($product, $includeDetails = false)
+    {
+        $data = [
+            'id' => $product->product_id,
+            'name' => $product->name,
+            'slug' => $product->slug,
+            'price' => (float) $product->price,
+            'formatted_price' => 'Rs. ' . number_format($product->price, 2),
+            'image' => $product->image ? asset('storage/products/' . $product->image) : asset('images/placeholder.jpg'),
+            'category' => [
+                'id' => $product->category->category_id ?? null,
+                'name' => $product->category->name ?? 'Uncategorized',
+                'slug' => $product->category->slug ?? null,
+            ],
+        ];
+
+        if ($includeDetails) {
+            // Add detailed information for product detail page
+            $data = array_merge($data, [
+                'description' => $product->description,
+                'stock' => $product->stock,
+                'stock_status' => $this->getStockStatus($product->stock),
+                'is_active' => (bool) $product->is_active,
+                'is_featured' => (bool) $product->is_featured,
+                'created_at' => $product->created_at,
+                'updated_at' => $product->updated_at,
+            ]);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Get stock status message (same logic as web views)
+     */
+    private function getStockStatus($stock)
+    {
+        if ($stock <= 0) {
+            return 'Out of stock';
+        } elseif ($stock < 10) {
+            return "Only {$stock} left in stock";
+        } else {
+            return 'In Stock';
+        }
+    }
+
+    /**
+     * Get products by category (matches web category page)
+     */
+    public function byCategory($slug)
+    {
+        $category = Category::where('slug', $slug)->first();
+        
+        if (!$category) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Category not found'
+            ], 404);
+        }
+
+        $products = Product::where('is_active', true)
+            ->where('category_id', $category->category_id)
+            ->with('category')
+            ->latest()
+            ->paginate(12);
+
+        // Hero images for categories (same as web)
+        $heroes = [
+            'men' => [
+                'img' => asset('images/heroes/men.jpg'),
+                'title' => "MEN'S WARDROBE",
+                'subtitle' => 'Bold fits for every day.',
+            ],
+            'women' => [
+                'img' => asset('images/heroes/women.jpg'),
+                'title' => "WOMEN'S WARDROBE",
+                'subtitle' => 'Statement pieces & everyday essentials.',
+            ],
+            'footwear' => [
+                'img' => asset('images/heroes/sneakers.jpeg'),
+                'title' => 'FOOTWEAR',
+                'subtitle' => 'Step into comfort and style.',
+            ],
+            'accessories' => [
+                'img' => asset('images/heroes/watch.jpg'),
+                'title' => 'ACCESSORIES',
+                'subtitle' => 'Finish your look with the right detail.',
+            ],
+        ];
+
+        $hero = $heroes[$slug] ?? [
+            'img' => asset('images/heroes/default.jpg'),
+            'title' => strtoupper($category->name),
+            'subtitle' => '',
+        ];
+
+        $transformedProducts = $products->getCollection()->map(function ($product) {
+            return $this->formatProductData($product);
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'category' => [
+                    'id' => $category->category_id,
+                    'name' => $category->name,
+                    'slug' => $category->slug,
+                    'hero' => $hero
+                ],
+                'products' => $transformedProducts,
+                'pagination' => [
+                    'current_page' => $products->currentPage(),
+                    'last_page' => $products->lastPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total(),
+                    'from' => $products->firstItem(),
+                    'to' => $products->lastItem(),
+                ]
+            ],
+            'message' => 'Category products retrieved successfully'
         ]);
     }
 }

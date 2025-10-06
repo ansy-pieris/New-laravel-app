@@ -10,24 +10,53 @@ use Illuminate\Http\Request;
 class CartApiController extends Controller
 {
     /**
-     * Get user's cart items
+     * Get user's cart items (enhanced to match web cart page)
      */
     public function index(Request $request)
     {
-        $cartItems = CartItem::with('product')
+        $cartItems = CartItem::with(['product.category'])
                             ->where('user_id', $request->user()->id)
                             ->get();
 
-        $total = $cartItems->sum(function($item) {
+        // Transform cart items to match web structure
+        $transformedItems = $cartItems->map(function($item) {
+            return [
+                'id' => $item->cart_id,
+                'quantity' => $item->quantity,
+                'product' => [
+                    'id' => $item->product->product_id,
+                    'name' => $item->product->name,
+                    'slug' => $item->product->slug,
+                    'price' => (float) $item->product->price,
+                    'formatted_price' => 'Rs. ' . number_format($item->product->price, 2),
+                    'image' => $item->product->image ? asset('storage/products/' . $item->product->image) : asset('images/placeholder.jpg'),
+                    'stock' => $item->product->stock,
+                    'category' => [
+                        'id' => $item->product->category->category_id ?? null,
+                        'name' => $item->product->category->name ?? 'Uncategorized',
+                    ]
+                ],
+                'subtotal' => (float) ($item->quantity * $item->product->price),
+                'formatted_subtotal' => 'Rs. ' . number_format($item->quantity * $item->product->price, 2)
+            ];
+        });
+
+        $totalPrice = $cartItems->sum(function($item) {
             return $item->quantity * $item->product->price;
         });
+
+        $totalItems = $cartItems->sum('quantity');
 
         return response()->json([
             'success' => true,
             'data' => [
-                'items' => $cartItems,
-                'total_items' => $cartItems->sum('quantity'),
-                'total_price' => $total
+                'items' => $transformedItems,
+                'summary' => [
+                    'total_items' => $totalItems,
+                    'total_price' => (float) $totalPrice,
+                    'formatted_total' => 'Rs. ' . number_format($totalPrice, 2),
+                    'is_empty' => $cartItems->isEmpty()
+                ]
             ],
             'message' => 'Cart retrieved successfully'
         ]);

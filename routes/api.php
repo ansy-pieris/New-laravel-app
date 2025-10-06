@@ -8,6 +8,8 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\CartApiController;
 use App\Http\Controllers\Api\OrderApiController;
 use App\Http\Controllers\Api\CategoryApiController;
+use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\HomepageApiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +40,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('apparel')->group(function () {
     
     // ========================================
+    // HOMEPAGE DATA
+    // ========================================
+    Route::get('homepage', [HomepageApiController::class, 'index']);        // Homepage data
+    
+    // ========================================
     // AUTHENTICATION
     // ========================================
     Route::post('login', [AuthController::class, 'login']);        // User login
@@ -58,6 +65,13 @@ Route::prefix('apparel')->group(function () {
     Route::get('categories/{id}', [CategoryApiController::class, 'show']);          // Get single category
     Route::get('categories/{id}/products', [CategoryApiController::class, 'getProducts']); // Category products
     Route::get('categories/{id}/stats', [CategoryApiController::class, 'getStats']);       // Category statistics
+    Route::get('categories/{slug}/page', [ProductApiController::class, 'byCategory']); // Category page data
+    
+    // ========================================
+    // USER BROWSING
+    // ========================================
+    Route::get('users', [UserController::class, 'index']);                         // Get all users
+    Route::get('users/{id}', [UserController::class, 'show']);                     // Get single user
 });
 
 // ============================================================================
