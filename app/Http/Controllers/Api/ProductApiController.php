@@ -66,13 +66,30 @@ class ProductApiController extends Controller
      */
     public function show($id)
     {
-        $product = Product::with('category')->find($id);
+        try {
+            // Try to find product by ID first
+            $product = Product::with('category')->find($id);
+            
+            // If not found by ID, try to find by slug (in case slug was passed instead of ID)
+            if (!$product) {
+                $product = Product::with('category')->where('slug', $id)->first();
+            }
 
-        if (!$product) {
+            if (!$product) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Product with ID or slug '{$id}' not found",
+                    'debug' => [
+                        'requested_id' => $id,
+                        'available_ids' => Product::pluck('product_id')->toArray()
+                    ]
+                ], 404);
+            }
+        } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Product not found'
-            ], 404);
+                'message' => 'Error retrieving product: ' . $e->getMessage()
+            ], 500);
         }
 
         return response()->json([
@@ -264,21 +281,10 @@ class ProductApiController extends Controller
      */
     private function formatProductData($product, $includeDetails = false)
     {
-        // Generate full image URL for mobile app
-        $imageUrl = null;
-        if ($product->image) {
-            // Try different image paths
-            if (file_exists(public_path('storage/products/' . $product->image))) {
-                $imageUrl = url('storage/products/' . $product->image);
-            } elseif (file_exists(storage_path('app/public/products/' . $product->image))) {
-                $imageUrl = url('storage/products/' . $product->image);
-            } else {
-                // Fallback to asset helper
-                $imageUrl = asset('storage/products/' . $product->image);
-            }
-        } else {
-            $imageUrl = asset('images/placeholder.jpg');
-        }
+        // Generate simple image URL for mobile app
+        $imageUrl = $product->image 
+            ? asset('storage/products/' . $product->image)
+            : asset('images/placeholder.jpg');
 
         $data = [
             'id' => $product->product_id,
