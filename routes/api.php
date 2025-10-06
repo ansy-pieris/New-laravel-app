@@ -43,6 +43,7 @@ Route::prefix('apparel')->group(function () {
     // HOMEPAGE DATA
     // ========================================
     Route::get('homepage', [HomepageApiController::class, 'index']);        // Homepage data
+    Route::get('home', [HomepageApiController::class, 'index']);            // Alternative homepage route
     
     // ========================================
     // AUTHENTICATION

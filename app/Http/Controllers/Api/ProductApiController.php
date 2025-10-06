@@ -242,13 +242,29 @@ class ProductApiController extends Controller
      */
     private function formatProductData($product, $includeDetails = false)
     {
+        // Generate full image URL for mobile app
+        $imageUrl = null;
+        if ($product->image) {
+            // Try different image paths
+            if (file_exists(public_path('storage/products/' . $product->image))) {
+                $imageUrl = url('storage/products/' . $product->image);
+            } elseif (file_exists(storage_path('app/public/products/' . $product->image))) {
+                $imageUrl = url('storage/products/' . $product->image);
+            } else {
+                // Fallback to asset helper
+                $imageUrl = asset('storage/products/' . $product->image);
+            }
+        } else {
+            $imageUrl = asset('images/placeholder.jpg');
+        }
+
         $data = [
             'id' => $product->product_id,
             'name' => $product->name,
             'slug' => $product->slug,
             'price' => (float) $product->price,
             'formatted_price' => 'Rs. ' . number_format($product->price, 2),
-            'image' => $product->image ? asset('storage/products/' . $product->image) : asset('images/placeholder.jpg'),
+            'image' => $imageUrl,
             'category' => [
                 'id' => $product->category->category_id ?? null,
                 'name' => $product->category->name ?? 'Uncategorized',
