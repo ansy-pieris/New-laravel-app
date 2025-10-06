@@ -17,6 +17,7 @@ class ProductApiController extends Controller
     {
         $perPage = $request->get('per_page', 12); // Match web pagination
         $category = $request->get('category');
+        $featured = $request->get('featured'); // Add featured filter
         
         $query = Product::with('category')->where('is_active', true);
         
@@ -26,6 +27,14 @@ class ProductApiController extends Controller
             if ($categoryModel) {
                 $query->where('category_id', $categoryModel->category_id);
             }
+        }
+        
+        // Filter for featured products if requested
+        if ($featured === 'true' || $featured === '1') {
+            $query->where(function($q) {
+                $q->where('is_featured', true)
+                  ->orWhere('created_at', '>=', now()->subDays(30));
+            })->take(8);
         }
         
         $products = $query->latest()->paginate($perPage);
@@ -120,15 +129,28 @@ class ProductApiController extends Controller
      */
     public function featured()
     {
-        $products = Product::with('category')
-                          ->take(8)
-                          ->get();
+        try {
+            $products = Product::with('category')
+                ->where('is_featured', true)
+                ->orWhere('created_at', '>=', now()->subDays(30))
+                ->take(8)
+                ->get();
 
-        return response()->json([
-            'success' => true,
-            'data' => $products,
-            'message' => 'Featured products retrieved successfully'
-        ]);
+            $transformedProducts = $products->map(function ($product) {
+                return $this->formatProductData($product);
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $transformedProducts,
+                'message' => 'Featured products retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

@@ -55,9 +55,10 @@ Route::prefix('apparel')->group(function () {
     // PRODUCT BROWSING
     // ========================================
     Route::get('products', [ProductApiController::class, 'index']);         // Get all products
-    Route::get('products/{id}', [ProductApiController::class, 'show']);     // Get single product
-    Route::get('products/search', [ProductApiController::class, 'search']); // Search products
-    Route::get('products/featured', [ProductApiController::class, 'featured']); // Featured products
+    Route::get('products/search', [ProductApiController::class, 'search']); // Search products (specific routes first)
+    Route::get('products/featured', [ProductApiController::class, 'featured']); // Featured products (specific routes first)
+    Route::get('featured-test', [ProductApiController::class, 'featured']); // Test route for featured products
+    Route::get('products/{id}', [ProductApiController::class, 'show']);     // Get single product (general route last)
     
     // ========================================
     // CATEGORY BROWSING
