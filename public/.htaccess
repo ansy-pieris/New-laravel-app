@@ -31,6 +31,13 @@
     Header unset Server
     Header unset X-Powered-By
     
+    # CORS for Images (Flutter Web Support)
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico|bmp)$">
+        Header always set Access-Control-Allow-Origin "*"
+        Header always set Access-Control-Allow-Methods "GET, OPTIONS"
+        Header always set Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept"
+    </FilesMatch>
+    
     # Security Headers
     Header always set X-Content-Type-Options nosniff
     Header always set X-Frame-Options DENY
