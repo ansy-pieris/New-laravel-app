@@ -40,26 +40,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::prefix('apparel')->group(function () {
     
     // ========================================
-    // IMAGE SERVING WITH CORS
-    // ========================================
-    Route::get('image/{filename}', function($filename) {
-        // Construct path to image file
-        $path = public_path('images/' . $filename);
-        
-        // Check if file exists
-        if (!file_exists($path)) {
-            return response()->json(['error' => 'Image not found'], 404);
-        }
-        
-        // Return file with CORS headers
-        return response()->file($path, [
-            'Access-Control-Allow-Origin' => '*',
-            'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-            'Access-Control-Allow-Headers' => 'Content-Type'
-        ]);
-    });
-
-    // ========================================
     // HOMEPAGE DATA
     // ========================================
     Route::get('homepage', [HomepageApiController::class, 'index']);        // Homepage data
