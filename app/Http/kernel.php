@@ -4,7 +4,7 @@ class Kernel extends \Illuminate\Foundation\Http\Kernel
 {
     protected $middlewareGroups = [
         'api' => [
-            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            // Removed EnsureFrontendRequestsAreStateful for true API usage
             \Fruitcake\Cors\HandleCors::class,
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
