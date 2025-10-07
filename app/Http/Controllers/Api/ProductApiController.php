@@ -12,6 +12,7 @@ class ProductApiController extends Controller
 {
     /**
      * Get all products with pagination (enhanced for mobile app)
+     * Updated: Now includes descriptions and all essential fields
      */
     public function index(Request $request)
     {
