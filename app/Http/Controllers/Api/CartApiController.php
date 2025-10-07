@@ -102,13 +102,14 @@ class CartApiController extends Controller
     /**
      * Update cart item quantity
      */
-    public function updateQuantity(Request $request, $id)
+    public function updateQuantity(Request $request)
     {
         $request->validate([
+            'cart_item_id' => 'required|exists:cart_items,cart_id',
             'quantity' => 'required|integer|min:1'
         ]);
 
-        $cartItem = CartItem::where('id', $id)
+        $cartItem = CartItem::where('cart_id', $request->cart_item_id)
                            ->where('user_id', $request->user()->id)
                            ->first();
 
@@ -132,9 +133,13 @@ class CartApiController extends Controller
     /**
      * Remove item from cart
      */
-    public function removeFromCart(Request $request, $id)
+    public function removeFromCart(Request $request)
     {
-        $cartItem = CartItem::where('id', $id)
+        $request->validate([
+            'cart_item_id' => 'required|exists:cart_items,cart_id'
+        ]);
+
+        $cartItem = CartItem::where('cart_id', $request->cart_item_id)
                            ->where('user_id', $request->user()->id)
                            ->first();
 

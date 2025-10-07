@@ -96,8 +96,8 @@ Route::middleware('auth:sanctum')->prefix('apparel')->group(function () {
     Route::get('cart', [CartApiController::class, 'index']);                 // View cart
     Route::get('cart/count', [CartApiController::class, 'getCartCount']);    // Cart item count
     Route::post('cart/add', [CartApiController::class, 'addToCart']);        // Add to cart
-    Route::put('cart/{id}', [CartApiController::class, 'updateQuantity']);   // Update quantity
-    Route::delete('cart/{id}', [CartApiController::class, 'removeFromCart']); // Remove item
+    Route::put('cart/update', [CartApiController::class, 'updateQuantity']); // Update quantity (renamed for clarity)
+    Route::delete('cart/remove', [CartApiController::class, 'removeFromCart']); // Remove item (renamed for clarity)
     Route::delete('cart/clear', [CartApiController::class, 'clearCart']);    // Clear cart
     
     // ========================================
