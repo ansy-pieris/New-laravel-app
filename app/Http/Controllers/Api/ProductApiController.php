@@ -290,9 +290,13 @@ class ProductApiController extends Controller
             'id' => $product->product_id,
             'name' => $product->name,
             'slug' => $product->slug,
+            'description' => $product->description ?? '', // Always include description
             'price' => (float) $product->price,
             'formatted_price' => 'Rs. ' . number_format($product->price, 2),
             'image' => $imageUrl,
+            'stock' => $product->stock ?? 0, // Always include stock
+            'stock_status' => $this->getStockStatus($product->stock ?? 0), // Always include stock status
+            'is_featured' => (bool) $product->is_featured, // Always include featured status
             'category' => [
                 'id' => $product->category->category_id ?? null,
                 'name' => $product->category->name ?? 'Uncategorized',
