@@ -110,25 +110,33 @@ class AuthController extends Controller
             ], 401);
         }
         
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role ?? 'customer',
-                'phone' => $user->phone,
-                'address' => $user->address,
-                'city' => $user->city,
-                'postal_code' => $user->postal_code,
-                'email_verified_at' => $user->email_verified_at,
-                'created_at' => $user->created_at,
-                'updated_at' => $user->updated_at,
-                'is_admin' => method_exists($user, 'isAdmin') ? $user->isAdmin() : false,
-                'is_staff' => method_exists($user, 'isStaff') ? $user->isStaff() : false,
-            ],
-            'message' => 'Profile retrieved successfully'
-        ]);
+        try {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name ?? '',
+                    'email' => $user->email ?? '',
+                    'role' => $user->role ?? 'customer',
+                    'phone' => $user->phone ?? '',
+                    'address' => $user->address ?? '',
+                    'city' => $user->city ?? '',
+                    'postal_code' => $user->postal_code ?? '',
+                    'email_verified_at' => $user->email_verified_at,
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at,
+                    'is_admin' => $user->isAdmin(),
+                    'is_staff' => $user->isStaff(),
+                ],
+                'message' => 'Profile retrieved successfully'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving profile',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
