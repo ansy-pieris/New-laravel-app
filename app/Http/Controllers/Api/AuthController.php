@@ -101,13 +101,22 @@ class AuthController extends Controller
     {
         $user = $request->user();
         
+        // Ensure we always return JSON, even if user is not authenticated
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Please login first',
+                'error' => 'Authentication required'
+            ], 401);
+        }
+        
         return response()->json([
             'success' => true,
             'data' => [
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role,
+                'role' => $user->role ?? 'customer',
                 'phone' => $user->phone,
                 'address' => $user->address,
                 'city' => $user->city,
@@ -115,8 +124,8 @@ class AuthController extends Controller
                 'email_verified_at' => $user->email_verified_at,
                 'created_at' => $user->created_at,
                 'updated_at' => $user->updated_at,
-                'is_admin' => $user->isAdmin(),
-                'is_staff' => $user->isStaff(),
+                'is_admin' => method_exists($user, 'isAdmin') ? $user->isAdmin() : false,
+                'is_staff' => method_exists($user, 'isStaff') ? $user->isStaff() : false,
             ],
             'message' => 'Profile retrieved successfully'
         ]);
@@ -128,24 +137,69 @@ class AuthController extends Controller
     public function updateProfile(Request $request)
     {
         $user = $request->user();
+        
+        // Ensure we always return JSON, even if user is not authenticated
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized - Please login first',
+                'error' => 'Authentication required'
+            ], 401);
+        }
 
-        $request->validate([
-            'name' => 'string|max:255',
-            'email' => 'string|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'nullable|string|min:8|confirmed'
-        ]);
+        try {
+            $request->validate([
+                'name' => 'nullable|string|max:255',
+                'email' => 'nullable|string|email|max:255|unique:users,email,' . $user->id,
+                'password' => 'nullable|string|min:8|confirmed',
+                'phone' => 'nullable|string|max:20',
+                'address' => 'nullable|string|max:500',
+                'city' => 'nullable|string|max:100',
+                'postal_code' => 'nullable|string|max:20'
+            ]);
 
-        if ($request->has('name')) $user->name = $request->name;
-        if ($request->has('email')) $user->email = $request->email;
-        if ($request->has('password')) $user->password = Hash::make($request->password);
+            // Update only provided fields
+            if ($request->has('name')) $user->name = $request->name;
+            if ($request->has('email')) $user->email = $request->email;
+            if ($request->has('phone')) $user->phone = $request->phone;
+            if ($request->has('address')) $user->address = $request->address;
+            if ($request->has('city')) $user->city = $request->city;
+            if ($request->has('postal_code')) $user->postal_code = $request->postal_code;
+            if ($request->has('password') && $request->password) {
+                $user->password = Hash::make($request->password);
+            }
 
-        $user->save();
+            $user->save();
 
-        return response()->json([
-            'success' => true,
-            'data' => $user,
-            'message' => 'Profile updated successfully'
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role ?? 'customer',
+                    'phone' => $user->phone,
+                    'address' => $user->address,
+                    'city' => $user->city,
+                    'postal_code' => $user->postal_code,
+                    'updated_at' => $user->updated_at,
+                ],
+                'message' => 'Profile updated successfully'
+            ]);
+            
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Profile update failed',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
